@@ -1,32 +1,105 @@
-# This is a basic workflow that is manually triggered
+name: Update Content from Remote File
 
-name: Manual workflow
-
-# Controls when the action will run. Workflow runs when manually triggered using the UI
-# or API.
+# 定义工作流的触发事件
 on:
+  # 您可以根据需要选择触发方式，例如：
+  # 1. 定时任务 (每天下午4点执行)
+  schedule:
+    - cron: '0 8 * * *' # UTC 时间 8:00，相当于北京时间 16:00
+  # 2. 手动触发
   workflow_dispatch:
-    # Inputs the workflow accepts.
     inputs:
-      name:
-        # Friendly description to be shown in the UI instead of 'name'
-        description: 'Person to greet'
-        # Default value if no value is explicitly provided
-        default: 'World'
-        # Input has to be provided for the workflow to run
+      remote_url:
+        description: '远端文件的 HTTP URL'
         required: true
-        # The data type of the input
-        type: string
+        default: 'https://raw.githubusercontent.com/shaoyouvip/free/refs/heads/main/base64.txt' # 请替换为您的默认URL
+      target_file:
+        description: '要提交到的目标文件路径 (如: data/my_content.txt)'
+        required: true
+        default: 'data/zrf_content.txt' # 请替换为您的目标文件
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# 定义工作流中的任务
 jobs:
-  # This workflow contains a single job called "greet"
-  greet:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+  process_and_commit:
+    runs-on: ubuntu-latest # 使用最新的 Ubuntu Runner
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Runs a single command using the runners shell
-    - name: Send greeting
-      run: echo "Hello ${{ inputs.name }}"
+    
+    # 1. 检出代码 (必须，以便修改和提交)
+    - name: ?? Checkout Repository
+      uses: actions/checkout@v4
+      
+    # 2. 定义变量 (获取输入值或默认值)
+    - name: Set Variables
+      id: vars
+      run: |
+        # 确保输入或默认值被传递给后续步骤
+        REMOTE_URL="${{ github.event.inputs.remote_url || 'https://example.com/data/remote_content.txt' }}"
+        TARGET_FILE="${{ github.event.inputs.target_file || 'data/updated_content.txt' }}"
+        echo "remote_url=$REMOTE_URL" >> $GITHUB_OUTPUT
+        echo "target_file=$TARGET_FILE" >> $GITHUB_OUTPUT
+
+    # 3. 通过 HTTP 获取远端文件并处理
+    - name: ?? Fetch and Process Remote File
+      id: process
+      # 使用 Shell 脚本完成下载、处理和保存
+      run: |
+        REMOTE_URL="${{ steps.vars.outputs.remote_url }}"
+        TARGET_FILE="${{ steps.vars.outputs.target_file }}"
+        
+        echo "Downloading file from: $REMOTE_URL"
+        
+        # a. 下载远端文件内容
+        # 使用 wget 或 curl，这里使用 curl 
+        curl -s "$REMOTE_URL" -o remote_content.tmp
+        
+        # 检查下载是否成功
+        if [ ! -f remote_content.tmp ]; then
+          echo "::error::文件下载失败或为空。"
+          exit 1
+        fi
+        
+        echo "Processing file content..."
+        
+        # b. 使用 sed 移除末尾的时间戳：
+        # 正则表达式 (#[空格]YYYY-MM-DD[空格]HH:MM:SS) 移除掉文件的最后一行
+        # 注意: 如果时间戳不一定是文件的最后一行，请调整 sed 命令
+        # $!b 表示如果不是最后一行，则跳到行尾；N 表示读取下一行；/.../ 表示匹配并替换
+        
+        # 移除文件最后一行中匹配 "# YYYY-MM-DD HH:MM:SS" 的内容
+        # 注意: 这条命令假设时间戳在文件的末尾，并且前面没有其他内容
+        PROCESSED_CONTENT=$(sed 's/# [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\} [0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}$//' remote_content.tmp)
+        
+        # 打印处理后的内容（用于调试）
+        echo "--- Processed Content Start ---"
+        echo "$PROCESSED_CONTENT"
+        echo "--- Processed Content End ---"
+        
+        # c. 将处理后的内容写入目标文件
+        # 注意: 确保目标文件所在的目录存在
+        mkdir -p "$(dirname "$TARGET_FILE")"
+        echo "$PROCESSED_CONTENT" > "$TARGET_FILE"
+        
+        # 检查文件是否有变化
+        if git diff --exit-code "$TARGET_FILE"; then
+          echo "::notice::目标文件内容未发生变化，无需提交。"
+          echo "commit_needed=false" >> $GITHUB_OUTPUT
+        else
+          echo "::notice::目标文件内容已更新，准备提交。"
+          echo "commit_needed=true" >> $GITHUB_OUTPUT
+        fi
+
+    # 4. 提交变化 (仅在文件有变化时执行)
+    - name: ?? Commit changes
+      if: steps.process.outputs.commit_needed == 'true'
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        # 提交的提交信息
+        commit_message: 'CI(update): Auto-update content from remote source'
+        # 要提交的文件，这里使用步骤3中定义的 TARGET_FILE
+        file_pattern: ${{ steps.vars.outputs.target_file }}
+        # GitHub Action 的内置 Token，用于提交到仓库
+        token: ${{ secrets.GITHUB_TOKEN }}
+        # Git 作者信息
+        commit_user_name: GitHub Actions Bot
+        commit_user_email: actions@github.com
