@@ -8,13 +8,12 @@ on:
   workflow_dispatch:
     # Inputs the workflow accepts.
     inputs:
-      inputs:
-        remote_url:
-          description: 'Զ���ļ��� HTTP URL'
-          default: 'https://raw.githubusercontent.com/shaoyouvip/free/refs/heads/main/base64.txt' # ���滻Ϊ����Ĭ��URL
-        target_file:
-          description: 'Ҫ�ύ����Ŀ���ļ�·�� (��: data/my_content.txt)'
-          default: 'data/zrf_content.txt' # ���滻Ϊ����Ŀ���ļ�
+      remote_url:
+        description: 'Զ���ļ��� HTTP URL'
+        default: 'https://raw.githubusercontent.com/shaoyouvip/free/refs/heads/main/base64.txt' # ���滻Ϊ����Ĭ��URL
+      target_file:
+        description: 'Ҫ�ύ����Ŀ���ļ�·�� (��: data/my_content.txt)'
+        default: 'data/zrf_content.txt' # ���滻Ϊ����Ŀ���ļ�
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
