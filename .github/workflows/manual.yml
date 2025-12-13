@@ -1,6 +1,6 @@
 # This is a basic workflow that is manually triggered
 
-name: Update Content from Remote File
+name: zrfv2ray
 
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
@@ -18,7 +18,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "greet"
-  greet:
+  subcribe:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -78,3 +78,26 @@ jobs:
         # 注意: 确保目标文件所在的目录存在
         mkdir -p "$(dirname "$TARGET_FILE")"
         echo "$PROCESSED_CONTENT" > "$TARGET_FILE"
+        # 检查文件是否有变化
+        if git diff --exit-code "$TARGET_FILE"; then
+          echo "::notice::目标文件内容未发生变化，无需提交。"
+          echo "commit_needed=false" >> $GITHUB_OUTPUT
+        else
+          echo "::notice::目标文件内容已更新，准备提交。"
+          echo "commit_needed=true" >> $GITHUB_OUTPUT
+        fi
+      
+    # 4. 提交变化 (仅在文件有变化时执行)
+    - name: 💾 Commit changes
+      if: steps.process.outputs.commit_needed == 'true'
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        # 提交的提交信息
+        commit_message: 'CI(update): Auto-update content from remote source'
+        # 要提交的文件，这里使用步骤3中定义的 TARGET_FILE
+        file_pattern: ${{ steps.vars.outputs.target_file }}
+        # GitHub Action 的内置 Token，用于提交到仓库
+        token: ${{ secrets.GITHUB_TOKEN }}
+        # Git 作者信息
+        commit_user_name: GitHub Actions Bot
+        commit_user_email: actions@github.com 
