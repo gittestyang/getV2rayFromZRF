@@ -37,16 +37,16 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     # Runs a single command using the runners shell
-    - name: Send greeting
-      run: echo "Hello ${{ inputs.remote_url }}"
+    #- name: Send greeting
+    #  run: echo "Hello ${{ inputs.remote_url }}"
     - name: Checkout Repository
       uses: actions/checkout@v4
     - name: Set Variables
       id: vars
       run: |
         # 确保输入或默认值被传递给后续步骤
-        REMOTE_URL="${{ github.event.inputs.remote_url || 'https://example.com/data/remote_content.txt' }}"
-        TARGET_FILE="${{ github.event.inputs.target_file || 'data/updated_content.txt' }}"
+        REMOTE_URL="${{ github.event.inputs.remote_url || 'https://raw.githubusercontent.com/shaoyouvip/free/refs/heads/main/base64.txt' }}"
+        TARGET_FILE="${{ github.event.inputs.target_file || 'data/zrf_content.txt' }}"
         echo "remote_url=$REMOTE_URL" >> $GITHUB_OUTPUT
         echo "target_file=$TARGET_FILE" >> $GITHUB_OUTPUT
 
