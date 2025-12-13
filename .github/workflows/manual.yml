@@ -85,12 +85,14 @@ jobs:
         
         # c. 将处理后的内容写入目标文件
         # 注意: 确保目标文件所在的目录存在
+        
         mkdir -p "$(dirname "$TARGET_FILE")"
         echo "$PROCESSED_CONTENT" > "$TARGET_FILE"
         # 检查文件是否有变化
         if git diff --exit-code "$TARGET_FILE"; then
           echo "::notice::目标文件内容未发生变化，无需提交。"
-          echo "commit_needed=false" >> $GITHUB_OUTPUT
+          # echo "commit_needed=false" >> $GITHUB_OUTPUT
+          echo "commit_needed=true" >> $GITHUB_OUTPUT
         else
           echo "::notice::目标文件内容已更新，准备提交。"
           echo "commit_needed=true" >> $GITHUB_OUTPUT
