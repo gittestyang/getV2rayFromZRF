@@ -1,105 +1,63 @@
-name: Update Content from Remote File
+# This is a basic workflow that is manually triggered
 
-# ¶¨Òå¹¤×÷Á÷µÄ´¥·¢ÊÂ¼ş
+name: yoyapaiv2ray
+
+# Controls when the action will run. Workflow runs when manually triggered using the UI
+# or API.
 on:
-  # Äú¿ÉÒÔ¸ù¾İĞèÒªÑ¡Ôñ´¥·¢·½Ê½£¬ÀıÈç£º
-  # 1. ¶¨Ê±ÈÎÎñ (Ã¿ÌìÏÂÎç4µãÖ´ĞĞ)
   schedule:
-    - cron: '0 8 * * *' # UTC Ê±¼ä 8:00£¬Ïàµ±ÓÚ±±¾©Ê±¼ä 16:00
-  # 2. ÊÖ¶¯´¥·¢
-  workflow_dispatch:
-    inputs:
-      remote_url:
-        description: 'Ô¶¶ËÎÄ¼şµÄ HTTP URL'
-        required: true
-        default: 'https://raw.githubusercontent.com/shaoyouvip/free/refs/heads/main/base64.txt' # ÇëÌæ»»ÎªÄúµÄÄ¬ÈÏURL
-      target_file:
-        description: 'ÒªÌá½»µ½µÄÄ¿±êÎÄ¼şÂ·¾¶ (Èç: data/my_content.txt)'
-        required: true
-        default: 'data/zrf_content.txt' # ÇëÌæ»»ÎªÄúµÄÄ¿±êÎÄ¼ş
 
-# ¶¨Òå¹¤×÷Á÷ÖĞµÄÈÎÎñ
+    - cron: '0 * * * *'
+
+
+  workflow_dispatch: # å…è®¸æ‰‹åŠ¨è§¦å‘æ‰§è¡Œ
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  process_and_commit:
-    runs-on: ubuntu-latest # Ê¹ÓÃ×îĞÂµÄ Ubuntu Runner
+  # This workflow contains a single job called "greet"
+  update_subscription:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # å¿…é¡»æˆäºˆå†™å…¥æƒé™æ‰èƒ½æäº¤å’Œæ¨é€
+      pull-requests: write # å¯é€‰ï¼Œå¦‚æœå·¥ä½œæµéœ€è¦æ“ä½œ PR
 
+    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    
-    # 1. ¼ì³ö´úÂë (±ØĞë£¬ÒÔ±ãĞŞ¸ÄºÍÌá½»)
-    - name: ?? Checkout Repository
-      uses: actions/checkout@v4
-      
-    # 2. ¶¨Òå±äÁ¿ (»ñÈ¡ÊäÈëÖµ»òÄ¬ÈÏÖµ)
-    - name: Set Variables
-      id: vars
-      run: |
-        # È·±£ÊäÈë»òÄ¬ÈÏÖµ±»´«µİ¸øºóĞø²½Öè
-        REMOTE_URL="${{ github.event.inputs.remote_url || 'https://example.com/data/remote_content.txt' }}"
-        TARGET_FILE="${{ github.event.inputs.target_file || 'data/updated_content.txt' }}"
-        echo "remote_url=$REMOTE_URL" >> $GITHUB_OUTPUT
-        echo "target_file=$TARGET_FILE" >> $GITHUB_OUTPUT
+      # Runs a single command using the runners shell
+      #- name: Send greeting
+      #  run: echo "Hello ${{ inputs.remote_url }}"
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    # 3. Í¨¹ı HTTP »ñÈ¡Ô¶¶ËÎÄ¼ş²¢´¦Àí
-    - name: ?? Fetch and Process Remote File
-      id: process
-      # Ê¹ÓÃ Shell ½Å±¾Íê³ÉÏÂÔØ¡¢´¦ÀíºÍ±£´æ
-      run: |
-        REMOTE_URL="${{ steps.vars.outputs.remote_url }}"
-        TARGET_FILE="${{ steps.vars.outputs.target_file }}"
-        
-        echo "Downloading file from: $REMOTE_URL"
-        
-        # a. ÏÂÔØÔ¶¶ËÎÄ¼şÄÚÈİ
-        # Ê¹ÓÃ wget »ò curl£¬ÕâÀïÊ¹ÓÃ curl 
-        curl -s "$REMOTE_URL" -o remote_content.tmp
-        
-        # ¼ì²éÏÂÔØÊÇ·ñ³É¹¦
-        if [ ! -f remote_content.tmp ]; then
-          echo "::error::ÎÄ¼şÏÂÔØÊ§°Ü»òÎª¿Õ¡£"
-          exit 1
-        fi
-        
-        echo "Processing file content..."
-        
-        # b. Ê¹ÓÃ sed ÒÆ³ıÄ©Î²µÄÊ±¼ä´Á£º
-        # ÕıÔò±í´ïÊ½ (#[¿Õ¸ñ]YYYY-MM-DD[¿Õ¸ñ]HH:MM:SS) ÒÆ³ıµôÎÄ¼şµÄ×îºóÒ»ĞĞ
-        # ×¢Òâ: Èç¹ûÊ±¼ä´Á²»Ò»¶¨ÊÇÎÄ¼şµÄ×îºóÒ»ĞĞ£¬Çëµ÷Õû sed ÃüÁî
-        # $!b ±íÊ¾Èç¹û²»ÊÇ×îºóÒ»ĞĞ£¬ÔòÌøµ½ĞĞÎ²£»N ±íÊ¾¶ÁÈ¡ÏÂÒ»ĞĞ£»/.../ ±íÊ¾Æ¥Åä²¢Ìæ»»
-        
-        # ÒÆ³ıÎÄ¼ş×îºóÒ»ĞĞÖĞÆ¥Åä "# YYYY-MM-DD HH:MM:SS" µÄÄÚÈİ
-        # ×¢Òâ: ÕâÌõÃüÁî¼ÙÉèÊ±¼ä´ÁÔÚÎÄ¼şµÄÄ©Î²£¬²¢ÇÒÇ°ÃæÃ»ÓĞÆäËûÄÚÈİ
-        PROCESSED_CONTENT=$(sed 's/# [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\} [0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}$//' remote_content.tmp)
-        
-        # ´òÓ¡´¦ÀíºóµÄÄÚÈİ£¨ÓÃÓÚµ÷ÊÔ£©
-        echo "--- Processed Content Start ---"
-        echo "$PROCESSED_CONTENT"
-        echo "--- Processed Content End ---"
-        
-        # c. ½«´¦ÀíºóµÄÄÚÈİĞ´ÈëÄ¿±êÎÄ¼ş
-        # ×¢Òâ: È·±£Ä¿±êÎÄ¼şËùÔÚµÄÄ¿Â¼´æÔÚ
-        mkdir -p "$(dirname "$TARGET_FILE")"
-        echo "$PROCESSED_CONTENT" > "$TARGET_FILE"
-        
-        # ¼ì²éÎÄ¼şÊÇ·ñÓĞ±ä»¯
-        if git diff --exit-code "$TARGET_FILE"; then
-          echo "::notice::Ä¿±êÎÄ¼şÄÚÈİÎ´·¢Éú±ä»¯£¬ÎŞĞèÌá½»¡£"
-          echo "commit_needed=false" >> $GITHUB_OUTPUT
-        else
-          echo "::notice::Ä¿±êÎÄ¼şÄÚÈİÒÑ¸üĞÂ£¬×¼±¸Ìá½»¡£"
-          echo "commit_needed=true" >> $GITHUB_OUTPUT
-        fi
 
-    # 4. Ìá½»±ä»¯ (½öÔÚÎÄ¼şÓĞ±ä»¯Ê±Ö´ĞĞ)
-    - name: ?? Commit changes
-      if: steps.process.outputs.commit_needed == 'true'
-      uses: stefanzweifel/git-auto-commit-action@v5
-      with:
-        # Ìá½»µÄÌá½»ĞÅÏ¢
-        commit_message: 'CI(update): Auto-update content from remote source'
-        # ÒªÌá½»µÄÎÄ¼ş£¬ÕâÀïÊ¹ÓÃ²½Öè3ÖĞ¶¨ÒåµÄ TARGET_FILE
-        file_pattern: ${{ steps.vars.outputs.target_file }}
-        # GitHub Action µÄÄÚÖÃ Token£¬ÓÃÓÚÌá½»µ½²Ö¿â
-        token: ${{ secrets.GITHUB_TOKEN }}
-        # Git ×÷ÕßĞÅÏ¢
-        commit_user_name: GitHub Actions Bot
-        commit_user_email: actions@github.com
+      - name: Download file with dynamic date
+          run: |
+            # è·å–åŒ—äº¬æ—¶é—´ (UTC+8) çš„æ—¥æœŸï¼Œæ ¼å¼ä¸º YYYYMMDD
+            CURRENT_DATE=$(TZ='Asia/Shanghai' date +'%Y%m%d')
+
+            # æ„é€ å®Œæ•´çš„ URL
+            URL="https://yoyapai.com/mianfeijiedian/${CURRENT_DATE}-ssr-v2ray-vpn-jiedian-yoyapai.com.txt"
+
+            echo "Attempting to download from: $URL"
+
+            # ä½¿ç”¨ curl ä¸‹è½½æ–‡ä»¶åˆ° data ç›®å½•
+            # -f å‚æ•°åœ¨ 404 æ—¶è¿”å›éé›¶é€€å‡ºç 
+            # -L å‚æ•°è·Ÿéšé‡å®šå‘
+            # -o æŒ‡å®šè¾“å‡ºè·¯å¾„
+            curl -f -L -o data/nodes.txt "$URL" || echo "Warning: File not found for today yet."
+
+      - name: Commit and Push
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          # æ£€æŸ¥æ˜¯å¦æœ‰å†…å®¹å˜åŒ–
+          if [ -n "$(git status --porcelain)" ]; then
+            git add data/nodes.txt
+            git commit -m "Update nodes for $(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M:%S')"
+            git push
+          else
+            echo "No changes detected, skipping commit."
+          fi
+
