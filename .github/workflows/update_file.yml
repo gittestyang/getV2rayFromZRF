@@ -32,20 +32,20 @@ jobs:
 
 
       - name: Download file with dynamic date
-          run: |
-            # 获取北京时间 (UTC+8) 的日期，格式为 YYYYMMDD
-            CURRENT_DATE=$(TZ='Asia/Shanghai' date +'%Y%m%d')
+        run: |
+          # 获取北京时间 (UTC+8) 的日期，格式为 YYYYMMDD
+          CURRENT_DATE=$(TZ='Asia/Shanghai' date +'%Y%m%d')
 
-            # 构造完整的 URL
-            URL="https://yoyapai.com/mianfeijiedian/${CURRENT_DATE}-ssr-v2ray-vpn-jiedian-yoyapai.com.txt"
+          # 构造完整的 URL
+          URL="https://yoyapai.com/mianfeijiedian/${CURRENT_DATE}-ssr-v2ray-vpn-jiedian-yoyapai.com.txt"
 
-            echo "Attempting to download from: $URL"
+          echo "Attempting to download from: $URL"
 
-            # 使用 curl 下载文件到 data 目录
-            # -f 参数在 404 时返回非零退出码
-            # -L 参数跟随重定向
-            # -o 指定输出路径
-            curl -f -L -o data/nodes.txt "$URL" || echo "Warning: File not found for today yet."
+          # 使用 curl 下载文件到 data 目录
+          # -f 参数在 404 时返回非零退出码
+          # -L 参数跟随重定向
+          # -o 指定输出路径
+          curl -f -L -o data/nodes.txt "$URL" || echo "Warning: File not found for today yet."
 
       - name: Commit and Push
         run: |
