@@ -43,7 +43,7 @@ jobs:
 
           # 2. 定义基础 URL 模板
           BASE_URL="https://yoyapai.com/mianfeijiedian"
-          SUFFIX="-ssr-v2ray-vpn-jiedian-yoyapai.com.txt"
+          SUFFIX="-ssr-v2ray-vpnjiedian-yoyapai.com.txt"
 
           echo "Today is: $TODAY"
           echo "Yesterday was: $YESTERDAY"
@@ -71,6 +71,7 @@ jobs:
           else
             echo "No changes detected in nodes, skipping commit."
           fi
+
 
 
 
