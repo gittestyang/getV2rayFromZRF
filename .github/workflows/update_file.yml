@@ -51,12 +51,13 @@ jobs:
           # 3. 下载今天的链接
           URL_TODAY="${BASE_URL}/${TODAY}${SUFFIX}"
           echo "Downloading today's file: $URL_TODAY"
-          curl -f -L -o data/today.txt "$URL_TODAY" || echo "Today's file not available yet."
-
+          #curl -f -L -o data/today.txt "$URL_TODAY" || echo "Today's file not available yet."
+          wget -O data/today.txt "$URL_TODAY" || echo "Today's file not available yet."
           # 4. 下载昨天的链接
           URL_YESTERDAY="${BASE_URL}/${YESTERDAY}${SUFFIX}"
           echo "Downloading yesterday's file: $URL_YESTERDAY"
-          curl -f -L -o data/yesterday.txt "$URL_YESTERDAY" || echo "Yesterday's file not found."
+          #curl -f -L -o data/yesterday.txt "$URL_YESTERDAY" || echo "Yesterday's file not found."
+          wget -O data/yesterday.txt "$URL_YESTERDAY" || echo "Yesterday's file not found."
 
       - name: Commit and Push
         run: |
@@ -71,6 +72,7 @@ jobs:
           else
             echo "No changes detected in nodes, skipping commit."
           fi
+
 
 
 
