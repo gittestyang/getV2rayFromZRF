@@ -1,77 +1,77 @@
-# This is a basic workflow that is manually triggered
+# # This is a basic workflow that is manually triggered
 
-name: yoyapaiv2ray
+# name: yoyapaiv2ray
 
-# Controls when the action will run. Workflow runs when manually triggered using the UI
-# or API.
-on:
-  schedule:
+# # Controls when the action will run. Workflow runs when manually triggered using the UI
+# # or API.
+# on:
+#   schedule:
 
-    - cron: '0 * * * *'
-
-
-  workflow_dispatch: # 允许手动触发执行
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
-jobs:
-  # This workflow contains a single job called "greet"
-  update_subscription:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write # 必须授予写入权限才能提交和推送
-      pull-requests: write # 可选，如果工作流需要操作 PR
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-      # Runs a single command using the runners shell
-      #- name: Send greeting
-      #  run: echo "Hello ${{ inputs.remote_url }}"
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+#     - cron: '0 * * * *'
 
 
-      - name: Download Today and Yesterday files
-        run: |
-          # 1. 计算日期 (北京时间 TZ='Asia/Shanghai')
-          TODAY=$(TZ='Asia/Shanghai' date +'%Y%m%d')
-          YESTERDAY=$(TZ='Asia/Shanghai' date -d "yesterday" +'%Y%m%d' --date="TZ=\"Asia/Shanghai\" now")
+#   workflow_dispatch: # 允许手动触发执行
 
-          # 注意：上面的 YESTERDAY 语法在某些 shell 环境下较复杂，更稳妥的写法如下：
-          # 获取北京当前时间的时间戳，减去 86400 秒
-          YESTERDAY=$(TZ='Asia/Shanghai' date -d "yesterday" +'%Y%m%d')
+# # A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# jobs:
+#   # This workflow contains a single job called "greet"
+#   update_subscription:
+#     # The type of runner that the job will run on
+#     runs-on: ubuntu-latest
+#     permissions:
+#       contents: write # 必须授予写入权限才能提交和推送
+#       pull-requests: write # 可选，如果工作流需要操作 PR
 
-          # 2. 定义基础 URL 模板
-          BASE_URL="https://yoyapai.com/mianfeijiedian"
-          SUFFIX="-ssr-v2ray-vpnjiedian-yoyapai.com.txt"
+#     # Steps represent a sequence of tasks that will be executed as part of the job
+#     steps:
+#       # Runs a single command using the runners shell
+#       #- name: Send greeting
+#       #  run: echo "Hello ${{ inputs.remote_url }}"
+#       - name: Checkout Repository
+#         uses: actions/checkout@v4
 
-          echo "Today is: $TODAY"
-          echo "Yesterday was: $YESTERDAY"
 
-          # 3. 下载今天的链接
-          URL_TODAY="${BASE_URL}/${TODAY}${SUFFIX}"
-          echo "Downloading today's file: $URL_TODAY"
-          #curl -f -L -o data/today.txt "$URL_TODAY" || echo "Today's file not available yet."
-          wget -O data/today.txt "$URL_TODAY" || echo "Today's file not available yet."
-          # 4. 下载昨天的链接
-          URL_YESTERDAY="${BASE_URL}/${YESTERDAY}${SUFFIX}"
-          echo "Downloading yesterday's file: $URL_YESTERDAY"
-          #curl -f -L -o data/yesterday.txt "$URL_YESTERDAY" || echo "Yesterday's file not found."
-          wget -O data/yesterday.txt "$URL_YESTERDAY" || echo "Yesterday's file not found."
+#       - name: Download Today and Yesterday files
+#         run: |
+#           # 1. 计算日期 (北京时间 TZ='Asia/Shanghai')
+#           TODAY=$(TZ='Asia/Shanghai' date +'%Y%m%d')
+#           YESTERDAY=$(TZ='Asia/Shanghai' date -d "yesterday" +'%Y%m%d' --date="TZ=\"Asia/Shanghai\" now")
 
-      - name: Commit and Push
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+#           # 注意：上面的 YESTERDAY 语法在某些 shell 环境下较复杂，更稳妥的写法如下：
+#           # 获取北京当前时间的时间戳，减去 86400 秒
+#           YESTERDAY=$(TZ='Asia/Shanghai' date -d "yesterday" +'%Y%m%d')
 
-          # 检查 data 目录下是否有任何变化
-          if [ -n "$(git status --porcelain data/)" ]; then
-            git add data/*.txt
-            git commit -m "Update nodes: $(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M')"
-            git push
-          else
-            echo "No changes detected in nodes, skipping commit."
-          fi
+#           # 2. 定义基础 URL 模板
+#           BASE_URL="https://yoyapai.com/mianfeijiedian"
+#           SUFFIX="-ssr-v2ray-vpnjiedian-yoyapai.com.txt"
+
+#           echo "Today is: $TODAY"
+#           echo "Yesterday was: $YESTERDAY"
+
+#           # 3. 下载今天的链接
+#           URL_TODAY="${BASE_URL}/${TODAY}${SUFFIX}"
+#           echo "Downloading today's file: $URL_TODAY"
+#           #curl -f -L -o data/today.txt "$URL_TODAY" || echo "Today's file not available yet."
+#           wget -O data/today.txt "$URL_TODAY" || echo "Today's file not available yet."
+#           # 4. 下载昨天的链接
+#           URL_YESTERDAY="${BASE_URL}/${YESTERDAY}${SUFFIX}"
+#           echo "Downloading yesterday's file: $URL_YESTERDAY"
+#           #curl -f -L -o data/yesterday.txt "$URL_YESTERDAY" || echo "Yesterday's file not found."
+#           wget -O data/yesterday.txt "$URL_YESTERDAY" || echo "Yesterday's file not found."
+
+#       - name: Commit and Push
+#         run: |
+#           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+#           git config --local user.name "github-actions[bot]"
+
+#           # 检查 data 目录下是否有任何变化
+#           if [ -n "$(git status --porcelain data/)" ]; then
+#             git add data/*.txt
+#             git commit -m "Update nodes: $(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M')"
+#             git push
+#           else
+#             echo "No changes detected in nodes, skipping commit."
+#           fi
 
 
 
