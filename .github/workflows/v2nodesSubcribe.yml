@@ -62,10 +62,10 @@ jobs:
         
         # a. 下载远端文件内容
         # 使用 wget 或 curl，这里使用 curl 
-        curl -s "$REMOTE_URL" -o remote_content.tmp
+        curl -s "$REMOTE_URL" -o remote_v2ray_content.tmp
         
         # 检查下载是否成功
-        if [ ! -f remote_content.tmp ]; then
+        if [ ! -f remote_v2ray_content.tmp ]; then
           echo "::error::文件下载失败或为空。"
           exit 1
         fi
@@ -79,7 +79,7 @@ jobs:
         
         # 移除文件最后一行中匹配 "# YYYY-MM-DD HH:MM:SS" 的内容
         # 注意: 这条命令假设时间戳在文件的末尾，并且前面没有其他内容
-        #PROCESSED_CONTENT=$(sed 's/# [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\} [0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}$//' remote_content.tmp)
+        PROCESSED_CONTENT=$(sed 's/# [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\} [0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}$//' remote_content.tmp)
         
         # 打印处理后的内容（用于调试）
         echo "--- Processed Content Start ---"
@@ -90,7 +90,7 @@ jobs:
         # 注意: 确保目标文件所在的目录存在
         
         mkdir -p "$(dirname "$TARGET_FILE")"
-        echo remote_content.tmp > "$TARGET_FILE"
+        echo remote_v2ray_content.tmp > "$TARGET_FILE"
         # 检查文件是否有变化
         if git diff --exit-code "$TARGET_FILE"; then
           echo "::notice::目标文件内容未发生变化，无需提交。"
