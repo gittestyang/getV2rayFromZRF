@@ -1,101 +1,46 @@
-# This is a basic workflow that is manually triggered
+name: Update V2Ray Nodes
 
-name: v2nodesSubcribe
-
-# Controls when the action will run. Workflow runs when manually triggered using the UI
-# or API.
 on:
   schedule:
     # 每10分钟运行一次 (分 时 日 月 周)
     - cron: '*/10 * * * *'
-  workflow_dispatch:
-    # Inputs the workflow accepts.
-    inputs:
-      remote_url:
-        description: 'HTTP URL'
-        default: 'https://www.v2nodes.com/subscriptions/country/all/?key=7D9BF79FC9BD6C4' # ���滻Ϊ����Ĭ��URL
-      target_file:
-        description: 'data/my_content.txt)'
-        default: 'data/v2ray_content.txt' # ���滻Ϊ����Ŀ���ļ�
+  workflow_dispatch: # 允许手动触发调试
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "greet"
-  subcribe:
-    # The type of runner that the job will run on
+  update-nodes:
     runs-on: ubuntu-latest
+    
     permissions:
-      contents: write # 必须授予写入权限才能提交和推送
-      pull-requests: write # 可选，如果工作流需要操作 PR
+      contents: write # 赋予 Action 提交代码的权限
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Runs a single command using the runners shell
-    #- name: Send greeting
-    #  run: echo "Hello ${{ inputs.remote_url }}"
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-    - name: Set Variables
-      id: vars
-      run: |
-        # 确保输入或默认值被传递给后续步骤
-        REMOTE_URL="${{ github.event.inputs.remote_url || 'https://www.v2nodes.com/subscriptions/country/all/?key=7D9BF79FC9BD6C4' }}"
-        TARGET_FILE="${{ github.event.inputs.target_file || 'data/v2ray_content.txt' }}"
-        echo "remote_url=$REMOTE_URL" >> $GITHUB_OUTPUT
-        echo "target_file=$TARGET_FILE" >> $GITHUB_OUTPUT
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    # 3. 通过 HTTP 获取远端文件并处理
-    - name: ⚙️ Fetch and Process Remote File
-      id: process
-      # 使用 Shell 脚本完成下载、处理和保存
-      run: |
-        REMOTE_URL="${{ steps.vars.outputs.remote_url }}"
-        TARGET_FILE="${{ steps.vars.outputs.target_file }}"
-        
-        echo "Downloading file from: $REMOTE_URL"
-        
-        # a. 下载远端文件内容
-        # 使用 wget 或 curl，这里使用 curl 
-        curl -sL "$REMOTE_URL" -o temp_nodes.txt
-        
-        # 如果下载成功（内容不为空），则覆盖旧文件
-        if [ -s temp_nodes.txt ]; then
-          echo "Download success"
-        else
-          echo "Download failed or content is empty"
-          exit 1
-        fi
-        
-        echo "Processing file content..."
-        
-        
-        
-        # c. 将处理后的内容写入目标文件
-        # 注意: 确保目标文件所在的目录存在
-        
-        mkdir -p "$(dirname "$TARGET_FILE")"
-        echo temp_nodes.txt > "$TARGET_FILE"
-        # 检查文件是否有变化
-        if git diff --exit-code "$TARGET_FILE"; then
-          echo "::notice::目标文件内容未发生变化，无需提交。"
-          echo "commit_needed=false" >> $GITHUB_OUTPUT
-          #echo "commit_needed=true" >> $GITHUB_OUTPUT
-        else
-          echo "::notice::目标文件内容已更新，准备提交。"
-          echo "commit_needed=true" >> $GITHUB_OUTPUT
-        fi
-      
-    # 4. 提交变化 (仅在文件有变化时执行)
-    - name: 💾 Commit changes
-      if: steps.process.outputs.commit_needed == 'true'
-      uses: stefanzweifel/git-auto-commit-action@v5
-      with:
-        # 提交的提交信息
-        commit_message: 'CI(update): Auto-update content from remote source'
-        # 要提交的文件，这里使用步骤3中定义的 TARGET_FILE
-        file_pattern: ${{ steps.vars.outputs.target_file }}
-        # GitHub Action 的内置 Token，用于提交到仓库
-        token: ${{ secrets.GITHUB_TOKEN }}
-        # Git 作者信息
-        commit_user_name: GitHub Actions Bot
-        commit_user_email: actions@github.com 
+      - name: Download nodes data
+        run: |
+          # 使用 curl 下载内容并保存到临时文件
+          URL="https://www.v2nodes.com/subscriptions/country/all/?key=7D9BF79FC9BD6C4"
+          curl -sL "$URL" -o temp_nodes.txt
+          
+          # 如果下载成功（内容不为空），则覆盖旧文件
+          if [ -s temp_nodes.txt ]; then
+            mv temp_nodes.txt data/v2ray_content.txt
+          else
+            echo "Download failed or content is empty"
+            exit 1
+          fi
+
+      - name: Commit and Push if changed
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # 检查文件是否有变化
+          git add data/v2ray_content.txt
+          if git diff --cached --quiet; then
+            echo "No changes detected, skipping commit."
+          else
+            git commit -m "Auto update nodes: $(date +'%Y-%m-%d %H:%M:%S')"
+            git push
+          fi
