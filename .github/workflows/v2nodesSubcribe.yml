@@ -19,7 +19,7 @@ jobs:
       - name: Download nodes data
         run: |
           # 使用 curl 下载内容并保存到临时文件
-          URL="https://www.v2nodes.com/subscriptions/country/all/?key=7D9BF79FC9BD6C4"
+          URL="https://www.v2nodes.com/subscriptions/country/all/?key=ECF3E8A3D71F168"
           curl -sL "$URL" -o temp_nodes.txt
           
           # 如果下载成功（内容不为空），则覆盖旧文件
